@@ -32,7 +32,7 @@ class home extends StatelessWidget {
                       backgroundColor: Colors.black12,
                     ),
                     onPressed: () {
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (context) => maps()),
                       );

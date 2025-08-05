@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import '../models/poi_model.dart';
 import '../services/poi_service.dart';
 import '../services/direction_service.dart';
+import 'package:poc_map/searchBar/searchBar.dart';
 
 class maps extends StatefulWidget {
   const maps({Key? key}) : super(key: key);
@@ -243,9 +244,15 @@ class _MapPageState extends State<maps> {
               // TODO: aggiungere un PolylineLayer per disegnare il percorso tra due punti.
             ],
           ),
-
           // TODO: La SearchBar e la PoiInfoCard
+          Positioned(
+            top: 40,    // o bottom: 70 per metterla in basso, ma meglio top per la barra di ricerca
+            left: 16,
+            right: 16,
+            child: SearchBarMap(),
+          ),
         ],
+
       ),
     );
   }
