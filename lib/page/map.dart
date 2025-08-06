@@ -1,3 +1,5 @@
+// src/pages/map_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -6,6 +8,7 @@ import '../models/poi_model.dart';
 import '../services/poi_service.dart';
 import '../services/direction_service.dart';
 import 'package:poc_map/searchBar/searchBar.dart';
+import '../widgets/poi_info_card.dart';
 
 class maps extends StatefulWidget {
   const maps({Key? key}) : super(key: key);
@@ -19,21 +22,23 @@ class _MapPageState extends State<maps> {
   final PoiService _poiService = PoiService();
   final DirectionService _directionService = DirectionService();
 
-  List<Poi> _allPois = []; // Lista di tutti i POI statici caricati all'avvio.
-  Poi? _selectedPoi; // Il POI attualmente selezionato dall'utente.
-  LatLng? _userLocation; // La posizione attuale dell'utente.
-  double _currentDistanceKm = 0.0;
-  int _currentTimeMinutes = 0;
+  List<Poi> _allPois = [];
+  Poi? _selectedPoi;
+  LatLng? _userLocation;
+  double _currentDrivingDistanceKm = 0.0;
+  int _currentDrivingTimeMinutes = 0;
+  double _currentWalkingDistanceKm = 0.0;
+  int _currentWalkingTimeMinutes = 0;
+  List<LatLng> _routePoints = [];
 
   @override
   void initState() {
     super.initState();
-    _allPois = _poiService
-        .getAllPois(); // Carica tutti i POI all'avvio dell'applicazione.
+    _allPois = _poiService.getAllPois();
     _initializeMapAndLocation();
   }
 
-  // Funzione per verificare i permessi e ottenere la posizione.
+  /// Funzione per verificare i permessi e ottenere la posizione.
   Future<Position> _determinePosition() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -57,85 +62,47 @@ class _MapPageState extends State<maps> {
     );
   }
 
-  /// Inizializza la geolocalizzazione dell'utente e centra la mappa sulla sua posizione.
-  /// Gestisce i permessi e gli errori di localizzazione.
+  /// Inizializza la geolocalizzazione dell'utente e centra la mappa.
   Future<void> _initializeMapAndLocation() async {
     try {
       Position pos = await _determinePosition();
       setState(() {
-        _userLocation = LatLng(
-          pos.latitude,
-          pos.longitude,
-        ); // Aggiorna la posizione dell'utente nello stato.
+        _userLocation = LatLng(pos.latitude, pos.longitude);
       });
 
-      // Sposta la mappa sulla posizione dell'utente
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_userLocation != null) {
-          _mapController.move(
-            _userLocation!,
-            15.0,
-          ); // Imposta lo zoom iniziale sulla posizione utente.
+          _mapController.move(_userLocation!, 15.0);
         } else {
-          _mapController.move(
-            LatLng(41.9028, 12.4964),
-            6.0,
-          ); // Roma come fallback.
+          _mapController.move(LatLng(41.9028, 12.4964), 6.0); // Roma fallback
         }
       });
 
-      // Inizia a monitorare gli aggiornamenti continui della posizione dell'utente direttamente con Geolocator.
       Geolocator.getPositionStream(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
-          distanceFilter:
-              10, // Aggiorna la posizione solo se c'è un cambio di almeno 10 metri
+          distanceFilter: 10,
         ),
       ).listen((newPosition) {
         setState(() {
-          _userLocation = LatLng(
-            newPosition.latitude,
-            newPosition.longitude,
-          ); // Aggiorna la posizione dell'utente in tempo reale.
+          _userLocation = LatLng(newPosition.latitude, newPosition.longitude);
         });
-        // Se un POI è già selezionato, ricalcola distanza e tempo con la nuova posizione dell'utente.
         if (_selectedPoi != null) {
-          _onPoiSelected(_selectedPoi!);
+          _updatePoiInfo(_selectedPoi!);
         }
       });
     } catch (e) {
-      // Gestisce le eccezioni lanciate da _determinePosition
-      _showSnackBar(
-        'Errore di geolocalizzazione: ${e.toString().replaceFirst('Exception: ', '')}',
-      );
-      // Sposta la mappa al fallback se la posizione non è disponibile.
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _mapController.move(LatLng(41.9028, 12.4964), 6.0);
+        _mapController.move(LatLng(41.9028, 12.4964), 6.0); // Roma fallback
       });
       setState(() {
-        _userLocation =
-            null; // Assicura che _userLocation sia null in caso di errore
+        _userLocation = null;
       });
     }
   }
 
-  /// Mostra una SnackBar con un messaggio informativo all'utente.
-  void _showSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
-    }
-  }
-
-  /// Aggiorna il POI selezionato, centra la mappa e calcola distanza/tempo.
-  void _onPoiSelected(Poi poi) {
-    setState(() {
-      _selectedPoi = poi;
-      // Centra la mappa sul POI selezionato per una migliore visualizzazione.
-      _mapController.move(LatLng(poi.latitude, poi.longitude), 15.0);
-    });
-
+  /// Calcola e aggiorna solo le informazioni di distanza/tempo del POI.
+  Future<void> _updatePoiInfo(Poi poi) async {
     if (_userLocation != null) {
       final Map<String, dynamic> drivingInfo = _directionService
           .getDistanceAndTime(
@@ -152,70 +119,135 @@ class _MapPageState extends State<maps> {
           );
 
       setState(() {
-        _currentDistanceKm =
-            drivingInfo['distance']; // Aggiorna la distanza calcolata.
-        _currentTimeMinutes = drivingInfo['time']; // Aggiorna il tempo stimato.
+        _currentDrivingDistanceKm = drivingInfo['distance'];
+        _currentDrivingTimeMinutes = drivingInfo['time'];
+        _currentWalkingDistanceKm = walkingInfo['distance'];
+        _currentWalkingTimeMinutes = walkingInfo['time'];
       });
-      // Stampa i dettagli nella console.
       print('POI Selezionato: ${poi.name}');
-      print('Distanza (auto): ${_currentDistanceKm.toStringAsFixed(2)} km');
-      print('Tempo (auto): $_currentTimeMinutes min');
       print(
-        'Distanza (a piedi): ${walkingInfo['distance'].toStringAsFixed(2)} km',
+        'Distanza (auto): ${_currentDrivingDistanceKm.toStringAsFixed(2)} km',
       );
-      print('Tempo (a piedi): ${walkingInfo['time']} min');
+      print('Tempo (auto): ${_currentDrivingTimeMinutes} min');
+      print(
+        'Distanza (a piedi): ${_currentWalkingDistanceKm.toStringAsFixed(2)} km',
+      );
+      print('Tempo (a piedi): ${_currentWalkingTimeMinutes} min');
     } else {
-      _showSnackBar(
-        'Posizione utente non disponibile per il calcolo della distanza.',
-      );
       setState(() {
-        _currentDistanceKm = 0.0;
-        _currentTimeMinutes = 0;
+        _currentDrivingDistanceKm = 0.0;
+        _currentDrivingTimeMinutes = 0;
+        _currentWalkingDistanceKm = 0.0;
+        _currentWalkingTimeMinutes = 0;
       });
     }
   }
 
+  /// Gestisce la selezione di un POI, centrando la mappa e mostrando le info.
+  void _onPoiSelected(Poi poi) async {
+    setState(() {
+      _selectedPoi = poi;
+      _mapController.move(LatLng(poi.latitude, poi.longitude), 15.0);
+      _routePoints =
+          []; // Assicurati che il percorso sia vuoto alla selezione iniziale
+    });
+    _updatePoiInfo(poi);
+  }
+
+  /// Calcola e mostra il percorso reale sulla mappa per la modalità selezionata.
+  Future<void> _showRealRoute(TravelMode mode) async {
+    // Accetta TravelMode
+    if (_userLocation != null && _selectedPoi != null) {
+      final List<LatLng> realRoute = await _directionService.getRealRoute(
+        _userLocation!,
+        LatLng(_selectedPoi!.latitude, _selectedPoi!.longitude),
+        mode, // Usa la modalità passata
+      );
+      setState(() {
+        _routePoints = realRoute;
+      });
+
+      final LatLngBounds bounds = LatLngBounds.fromPoints([
+        _userLocation!,
+        LatLng(_selectedPoi!.latitude, _selectedPoi!.longitude),
+      ]);
+      _mapController.fitCamera(
+        CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.all(80.0)),
+      );
+    } else {
+      setState(() {
+        _routePoints = [];
+      });
+    }
+  }
+
+  /// Resetta la selezione del POI e il percorso.
+  void _clearSelectionAndRoute() {
+    setState(() {
+      _selectedPoi = null;
+      _routePoints = [];
+      _currentDrivingDistanceKm = 0.0;
+      _currentDrivingTimeMinutes = 0;
+      _currentWalkingDistanceKm = 0.0;
+      _currentWalkingTimeMinutes = 0;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Crea la lista di tutti i marker da visualizzare sulla mappa.
-    // Inizia con i marker per tutti i Punti di Interesse.
-    final List<Marker> allMarkers = _allPois.map((poi) {
-      return Marker(
-        point: LatLng(poi.latitude, poi.longitude),
-        width: 80,
-        height: 80,
-        child: GestureDetector(
-          onTap: () {
-            _onPoiSelected(poi);
-            _showSnackBar('Hai toccato: ${poi.name}');
-          },
-          child: Icon(
-            Icons.location_pin,
-            // Cambia colore del marker se è il POI attualmente selezionato.
-            color: _selectedPoi?.id == poi.id ? Colors.orange : Colors.blue,
-            size: 40.0,
-          ),
-        ),
-      );
-    }).toList();
+    final List<Marker> allMarkers = [];
 
-    // Aggiungi il marker della posizione attuale dell'utente se disponibile.
     if (_userLocation != null) {
       allMarkers.add(
         Marker(
           point: _userLocation!,
           width: 80,
           height: 80,
-          child: const Icon(
-            Icons.my_location,
-            color: Colors.red, // Colore rosso per il marker dell'utente.
-            size: 40.0,
-          ),
+          child: const Icon(Icons.my_location, color: Colors.red, size: 40.0),
         ),
       );
     }
 
-    // Mostra un indicatore di caricamento finché la posizione dell'utente non è stata ottenuta.
+    if (_selectedPoi != null) {
+      allMarkers.add(
+        Marker(
+          point: LatLng(_selectedPoi!.latitude, _selectedPoi!.longitude),
+          width: 80,
+          height: 80,
+          child: GestureDetector(
+            onTap: () {
+              _onPoiSelected(_selectedPoi!);
+            },
+            child: const Icon(
+              Icons.location_pin,
+              color: Colors.orange,
+              size: 40.0,
+            ),
+          ),
+        ),
+      );
+    } else {
+      allMarkers.addAll(
+        _allPois.map((poi) {
+          return Marker(
+            point: LatLng(poi.latitude, poi.longitude),
+            width: 80,
+            height: 80,
+            child: GestureDetector(
+              onTap: () {
+                _onPoiSelected(poi);
+              },
+              child: const Icon(
+                Icons.location_pin,
+                color: Colors.blue,
+                size: 40.0,
+              ),
+            ),
+          );
+        }).toList(),
+      );
+    }
+
     if (_userLocation == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -223,36 +255,60 @@ class _MapPageState extends State<maps> {
     return Scaffold(
       body: Stack(
         children: [
-          // Widget principale della Mappa Flutter.
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
               initialCenter: _userLocation ?? LatLng(41.9028, 12.4964),
-
               initialZoom: _userLocation != null ? 15.0 : 6.0,
               minZoom: 2.0,
               maxZoom: 18.0,
               keepAlive: true,
+              // onTap: (tapPosition, latLng) => _clearSelectionAndRoute(), // Rimossa la callback onTap sulla mappa
             ),
             children: [
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.map_poc',
               ),
-
               MarkerLayer(markers: allMarkers),
-              // TODO: aggiungere un PolylineLayer per disegnare il percorso tra due punti.
+              if (_routePoints.length >= 2)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: _routePoints,
+                      color: const Color.fromARGB(255, 66, 102, 163),
+                      strokeWidth: 5.0,
+                    ),
+                  ],
+                ),
             ],
           ),
-          // TODO: La SearchBar e la PoiInfoCard
           Positioned(
-            top: 40,    // o bottom: 70 per metterla in basso, ma meglio top per la barra di ricerca
+            top: 40,
             left: 16,
             right: 16,
-            child: SearchBarMap(),
+            child: SearchBarMap(
+              //onPoiSelected: _onPoiSelected,
+            ),
           ),
+          // Mostra la PoiInfoCard solo se un POI è selezionato
+          if (_selectedPoi != null)
+            Positioned(
+              bottom: 16,
+              left: 16,
+              right: 16,
+              child: PoiInfoCard(
+                poi: _selectedPoi!,
+                distanceDrivingKm: _currentDrivingDistanceKm,
+                timeDrivingMinutes: _currentDrivingTimeMinutes,
+                distanceWalkingKm: _currentWalkingDistanceKm,
+                timeWalkingMinutes: _currentWalkingTimeMinutes,
+                onDirectionsPressed:
+                    _showRealRoute, // Passa il metodo che ora accetta TravelMode
+                onClosePressed: _clearSelectionAndRoute,
+              ),
+            ),
         ],
-
       ),
     );
   }
