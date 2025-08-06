@@ -11,13 +11,13 @@ class SearchBarMap extends StatelessWidget {
         child: TextField(
           decoration: InputDecoration(
             hintText: 'Seleziona un luogo sulla mappa',  // corretto
-            hintStyle: TextStyle(color: Colors.deepPurple),
+            hintStyle: TextStyle(color: Colors.white),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
             ),
             filled: true,
             fillColor: Colors.black,
-            prefixIcon: Icon(Icons.search,color: Colors.deepPurple,),
+            prefixIcon: Icon(Icons.search,color: Colors.white,),
           ),
         ),
       );

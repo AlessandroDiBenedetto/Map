@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:poc_map/widget_tree.dart';
 import 'map.dart';
 
 class home extends StatelessWidget {
@@ -34,13 +35,13 @@ class home extends StatelessWidget {
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => maps()),
+                        MaterialPageRoute(builder: (context) => WidgetTree()),
                       );
                     },
                     child: Text(
                       ('Cliccami per iniziare'),
                       style: TextStyle(
-                        color: Colors.deepPurple,
+                        color: Colors.teal,
                         fontFamily: 'sans-serif',
                       ),
                     ),
