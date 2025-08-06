@@ -1,29 +1,30 @@
+// poc_map/navBar/navBar.dart
+
 import 'package:flutter/material.dart';
-import 'package:poc_map/data/notifiers.dart';
+// Rimosso l'import di notifiers.dart in quanto la navigazione sarà gestita dal WidgetTree
 
-//Copiare l'intero file
+class NavBarMap extends StatelessWidget {
+  final int selectedIndex; // L'indice della pagina attualmente selezionata
+  final Function(int)
+  onItemTapped; // Callback per notificare la selezione di un elemento
 
-class NavBarMap extends StatefulWidget {
-  @override
-  State<NavBarMap> createState() => _NavBarMapState();
-}
+  const NavBarMap({
+    Key? key,
+    required this.selectedIndex,
+    required this.onItemTapped,
+  }) : super(key: key);
 
-class _NavBarMapState extends State<NavBarMap> {
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(valueListenable: selectPageNotifier, builder: (context,selectedPage,child){
-
+    // Il NavigationBar è ora un widget stateless che riceve il suo stato dal genitore
     return NavigationBar(
-      destinations: [
-          NavigationDestination(icon:Icon(Icons.map),label: 'Map',),
-          NavigationDestination(icon:Icon(Icons.info),label: 'Credit'),
-        ],
-        onDestinationSelected: (int value){
-          selectPageNotifier.value = value;
-        },
-        selectedIndex: selectedPage,
-          );
-        },
-      );
-    }
+      destinations: const [
+        NavigationDestination(icon: Icon(Icons.map), label: 'Mappa'),
+        NavigationDestination(icon: Icon(Icons.info), label: 'Crediti'),
+      ],
+      onDestinationSelected:
+          onItemTapped, // Chiama la callback fornita dal genitore
+      selectedIndex: selectedIndex, // Usa l'indice fornito dal genitore
+    );
+  }
 }

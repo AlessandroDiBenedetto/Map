@@ -11,13 +11,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(themeMode: ThemeMode.dark,
-    debugShowCheckedModeBanner: false,
-        darkTheme: ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: Colors.black, // Sfondo nero
-        ),
-    home: home(),
+    return MaterialApp(
+      themeMode: ThemeMode.dark,
+      debugShowCheckedModeBanner: false,
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: Colors.black, // Sfondo nero
+      ),
+      home: home(),
     );
   }
 }
@@ -27,7 +28,6 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return home(); 
+    return home();
   }
 }
-

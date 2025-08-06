@@ -12,7 +12,6 @@ class PoiInfoCard extends StatefulWidget {
   final int timeDrivingMinutes;
   final double distanceWalkingKm;
   final int timeWalkingMinutes;
-  // La callback ora accetta la modalità di viaggio selezionata
   final Function(TravelMode) onDirectionsPressed;
   final VoidCallback onClosePressed;
 
@@ -36,6 +35,16 @@ class _PoiInfoCardState extends State<PoiInfoCard> {
 
   @override
   Widget build(BuildContext context) {
+    // Determina la stringa della distanza
+    String distanceText;
+    if (widget.distanceDrivingKm < 1.0) {
+      // Se la distanza è inferiore a 1 km, mostra in metri
+      distanceText = '${(widget.distanceDrivingKm * 1000).round()} m';
+    } else {
+      // Altrimenti, mostra in chilometri
+      distanceText = '${widget.distanceDrivingKm.toStringAsFixed(2)} km';
+    }
+
     return Card(
       elevation: 8.0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
@@ -64,26 +73,42 @@ class _PoiInfoCardState extends State<PoiInfoCard> {
               ],
             ),
             const SizedBox(height: 12.0),
-            // Informazioni per la modalità in macchina
+            // Distanza (una sola, con logica KM/M)
+            Row(
+              children: [
+                const Icon(
+                  Icons.alt_route,
+                  color: Colors.grey,
+                  size: 20,
+                ), // Icona generica per distanza
+                const SizedBox(width: 8.0),
+                Text(
+                  'Distanza: $distanceText', // Usa la stringa formattata
+                  style: const TextStyle(fontSize: 16.0, color: Colors.teal),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8.0),
+            // Tempo in macchina
             Row(
               children: [
                 const Icon(Icons.directions_car, color: Colors.grey, size: 20),
                 const SizedBox(width: 8.0),
                 Text(
-                  'Auto: ${widget.distanceDrivingKm.toStringAsFixed(2)} km, ${widget.timeDrivingMinutes} min',
-                  style: const TextStyle(fontSize: 16.0, color: Colors.white),
+                  'Auto: ${widget.timeDrivingMinutes} min',
+                  style: const TextStyle(fontSize: 16.0, color: Colors.teal),
                 ),
               ],
             ),
             const SizedBox(height: 8.0),
-            // Informazioni per la modalità a piedi
+            // Tempo a piedi
             Row(
               children: [
                 const Icon(Icons.directions_walk, color: Colors.grey, size: 20),
                 const SizedBox(width: 8.0),
                 Text(
-                  'A piedi: ${widget.distanceWalkingKm.toStringAsFixed(2)} km, ${widget.timeWalkingMinutes} min',
-                  style: const TextStyle(fontSize: 16.0, color: Colors.white),
+                  'A piedi: ${widget.timeWalkingMinutes} min',
+                  style: const TextStyle(fontSize: 16.0, color: Colors.teal),
                 ),
               ],
             ),
@@ -110,8 +135,8 @@ class _PoiInfoCardState extends State<PoiInfoCard> {
                   });
                 },
                 style: SegmentedButton.styleFrom(
-                  selectedForegroundColor: Colors.white,
-                  selectedBackgroundColor: Colors.teal,
+                  selectedForegroundColor: Colors.teal,
+                  selectedBackgroundColor: Colors.white,
                 ),
               ),
             ),
@@ -120,7 +145,6 @@ class _PoiInfoCardState extends State<PoiInfoCard> {
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
-                // Passa la modalità selezionata alla callback
                 onPressed: () =>
                     widget.onDirectionsPressed(_selectedTravelMode),
                 icon: const Icon(Icons.navigation),

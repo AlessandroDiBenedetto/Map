@@ -1,4 +1,4 @@
-// src/pages/map_page.dart
+// src/pages/map.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -17,10 +17,12 @@ class maps extends StatefulWidget {
   State<maps> createState() => _MapPageState();
 }
 
-class _MapPageState extends State<maps> {
+class _MapPageState extends State<maps> with WidgetsBindingObserver {
   final MapController _mapController = MapController();
   final PoiService _poiService = PoiService();
   final DirectionService _directionService = DirectionService();
+  final GlobalKey<SearchBarMapState> _searchBarKey =
+      GlobalKey(); // GlobalKey per la SearchBar
 
   List<Poi> _allPois = [];
   Poi? _selectedPoi;
@@ -30,12 +32,28 @@ class _MapPageState extends State<maps> {
   double _currentWalkingDistanceKm = 0.0;
   int _currentWalkingTimeMinutes = 0;
   List<LatLng> _routePoints = [];
+  bool _isLoading = true;
+  bool _isNavigating = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _allPois = _poiService.getAllPois();
     _initializeMapAndLocation();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _initializeMapAndLocation();
+    }
   }
 
   /// Funzione per verificare i permessi e ottenere la posizione.
@@ -64,18 +82,18 @@ class _MapPageState extends State<maps> {
 
   /// Inizializza la geolocalizzazione dell'utente e centra la mappa.
   Future<void> _initializeMapAndLocation() async {
+    setState(() {
+      _isLoading = true;
+    });
     try {
       Position pos = await _determinePosition();
       setState(() {
         _userLocation = LatLng(pos.latitude, pos.longitude);
+        _isLoading = false;
       });
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_userLocation != null) {
-          _mapController.move(_userLocation!, 15.0);
-        } else {
-          _mapController.move(LatLng(41.9028, 12.4964), 6.0); // Roma fallback
-        }
+        _mapController.move(_userLocation!, 15.0);
       });
 
       Geolocator.getPositionStream(
@@ -87,17 +105,37 @@ class _MapPageState extends State<maps> {
         setState(() {
           _userLocation = LatLng(newPosition.latitude, newPosition.longitude);
         });
-        if (_selectedPoi != null) {
+        if (_selectedPoi != null && !_isNavigating) {
           _updatePoiInfo(_selectedPoi!);
+        }
+        if (_isNavigating && _selectedPoi != null) {
+          _showRealRoute(TravelMode.driving);
         }
       });
     } catch (e) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _mapController.move(LatLng(41.9028, 12.4964), 6.0); // Roma fallback
-      });
       setState(() {
-        _userLocation = null;
+        _userLocation = LatLng(41.9028, 12.4964); // Roma fallback
+        _isLoading = false;
       });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _mapController.move(_userLocation!, 6.0);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Errore di geolocalizzazione: ${e.toString().replaceFirst('Exception: ', '')}. Mappa centrata su Roma.',
+          ),
+        ),
+      );
+    }
+  }
+
+  /// Mostra una SnackBar.
+  void _showSnackBar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -148,23 +186,23 @@ class _MapPageState extends State<maps> {
     setState(() {
       _selectedPoi = poi;
       _mapController.move(LatLng(poi.latitude, poi.longitude), 15.0);
-      _routePoints =
-          []; // Assicurati che il percorso sia vuoto alla selezione iniziale
+      _routePoints = [];
+      _isNavigating = false;
     });
     _updatePoiInfo(poi);
   }
 
   /// Calcola e mostra il percorso reale sulla mappa per la modalità selezionata.
   Future<void> _showRealRoute(TravelMode mode) async {
-    // Accetta TravelMode
     if (_userLocation != null && _selectedPoi != null) {
       final List<LatLng> realRoute = await _directionService.getRealRoute(
         _userLocation!,
         LatLng(_selectedPoi!.latitude, _selectedPoi!.longitude),
-        mode, // Usa la modalità passata
+        mode,
       );
       setState(() {
         _routePoints = realRoute;
+        _isNavigating = true;
       });
 
       final LatLngBounds bounds = LatLngBounds.fromPoints([
@@ -177,6 +215,7 @@ class _MapPageState extends State<maps> {
     } else {
       setState(() {
         _routePoints = [];
+        _isNavigating = false;
       });
     }
   }
@@ -190,6 +229,7 @@ class _MapPageState extends State<maps> {
       _currentDrivingTimeMinutes = 0;
       _currentWalkingDistanceKm = 0.0;
       _currentWalkingTimeMinutes = 0;
+      _isNavigating = false;
     });
   }
 
@@ -203,7 +243,7 @@ class _MapPageState extends State<maps> {
           point: _userLocation!,
           width: 80,
           height: 80,
-          child: const Icon(Icons.my_location, color: Colors.teal, size: 40.0),
+          child: const Icon(Icons.my_location, color: Colors.red, size: 40.0),
         ),
       );
     }
@@ -216,17 +256,26 @@ class _MapPageState extends State<maps> {
           height: 80,
           child: GestureDetector(
             onTap: () {
-              _onPoiSelected(_selectedPoi!);
+              if (!_isNavigating) {
+                _onPoiSelected(_selectedPoi!);
+              } else {
+                _mapController.move(
+                  LatLng(_selectedPoi!.latitude, _selectedPoi!.longitude),
+                  15.0,
+                );
+              }
             },
             child: const Icon(
               Icons.location_pin,
-              color: Colors.teal,
+              color: Colors.orange,
               size: 40.0,
             ),
           ),
         ),
       );
-    } else {
+    }
+
+    if (_selectedPoi == null && !_isNavigating) {
       allMarkers.addAll(
         _allPois.map((poi) {
           return Marker(
@@ -248,68 +297,99 @@ class _MapPageState extends State<maps> {
       );
     }
 
-    if (_userLocation == null) {
+    if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _userLocation ?? LatLng(41.9028, 12.4964),
-              initialZoom: _userLocation != null ? 15.0 : 6.0,
-              minZoom: 2.0,
-              maxZoom: 18.0,
-              keepAlive: true,
-              // onTap: (tapPosition, latLng) => _clearSelectionAndRoute(), // Rimossa la callback onTap sulla mappa
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.map_poc',
+    return WillPopScope(
+      // Widget per intercettare il tasto/gesture indietro
+      onWillPop: () async {
+        if (_searchBarKey.currentState != null &&
+            _searchBarKey.currentState!.isSearchActive) {
+          _searchBarKey.currentState!.deactivateSearch();
+          return false; // Consuma l'evento indietro, non uscire dalla pagina
+        }
+        return true; // Lascia che l'evento indietro faccia il suo corso (es. esci dalla pagina)
+      },
+      child: Scaffold(
+        body: Stack(
+          children: [
+            FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _userLocation ?? LatLng(41.9028, 12.4964),
+                initialZoom: _userLocation != null ? 15.0 : 6.0,
+                minZoom: 2.0,
+                maxZoom: 18.0,
+                keepAlive: true,
+                onTap: (tapPosition, latLng) {
+                  // Gestisce il tap sulla mappa
+                  if (_searchBarKey.currentState != null &&
+                      _searchBarKey.currentState!.isSearchActive) {
+                    _searchBarKey.currentState!.deactivateSearch();
+                  }
+                },
               ),
-              MarkerLayer(markers: allMarkers),
-              if (_routePoints.length >= 2)
-                PolylineLayer(
-                  polylines: [
-                    Polyline(
-                      points: _routePoints,
-                      color: const Color.fromARGB(255, 66, 102, 163),
-                      strokeWidth: 5.0,
-                    ),
-                  ],
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.map_poc',
                 ),
-            ],
-          ),
-          Positioned(
-            top: 40,
-            left: 16,
-            right: 16,
-            child: SearchBarMap(
-              //onPoiSelected: _onPoiSelected,
+                MarkerLayer(markers: allMarkers),
+                if (_routePoints.length >= 2)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: _routePoints,
+                        color: const Color.fromARGB(255, 24, 71, 151),
+                        strokeWidth: 5.0,
+                      ),
+                    ],
+                  ),
+              ],
             ),
-          ),
-          // Mostra la PoiInfoCard solo se un POI è selezionato
-          if (_selectedPoi != null)
-            Positioned(
-              bottom: 16,
-              left: 16,
-              right: 16,
-              child: PoiInfoCard(
-                poi: _selectedPoi!,
-                distanceDrivingKm: _currentDrivingDistanceKm,
-                timeDrivingMinutes: _currentDrivingTimeMinutes,
-                distanceWalkingKm: _currentWalkingDistanceKm,
-                timeWalkingMinutes: _currentWalkingTimeMinutes,
-                onDirectionsPressed:
-                    _showRealRoute, // Passa il metodo che ora accetta TravelMode
-                onClosePressed: _clearSelectionAndRoute,
+            if (!_isNavigating)
+              Positioned(
+                top: 40,
+                left: 16,
+                right: 16,
+                child: SearchBarMap(
+                  key: _searchBarKey, // Assegna il GlobalKey
+                  onPoiSelected: _onPoiSelected,
+                ),
               ),
-            ),
-        ],
+            if (_selectedPoi != null && !_isNavigating)
+              Positioned(
+                bottom: 16,
+                left: 16,
+                right: 16,
+                child: PoiInfoCard(
+                  poi: _selectedPoi!,
+                  distanceDrivingKm: _currentDrivingDistanceKm,
+                  timeDrivingMinutes: _currentDrivingTimeMinutes,
+                  distanceWalkingKm: _currentWalkingDistanceKm,
+                  timeWalkingMinutes: _currentWalkingTimeMinutes,
+                  onDirectionsPressed: _showRealRoute,
+                  onClosePressed: _clearSelectionAndRoute,
+                ),
+              ),
+            if (_isNavigating)
+              Positioned(
+                top: 40,
+                right: 16,
+                child: FloatingActionButton.extended(
+                  onPressed: _clearSelectionAndRoute,
+                  label: const Text('Annulla Navigazione'),
+                  icon: const Icon(Icons.cancel),
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 }
+
+//dove sonon io
