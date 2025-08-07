@@ -7,7 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import '../models/poi_model.dart';
 import '../services/poi_service.dart';
 import '../services/direction_service.dart';
-import 'package:poc_map/searchBar/searchBar.dart';
+import '../widgets/search_bar.dart';
 import '../widgets/poi_info_card.dart';
 
 class maps extends StatefulWidget {
@@ -21,8 +21,7 @@ class _MapPageState extends State<maps> with WidgetsBindingObserver {
   final MapController _mapController = MapController();
   final PoiService _poiService = PoiService();
   final DirectionService _directionService = DirectionService();
-  final GlobalKey<SearchBarMapState> _searchBarKey =
-      GlobalKey(); // GlobalKey per la SearchBar
+  final GlobalKey<SearchBarMapState> _searchBarKey = GlobalKey();
 
   List<Poi> _allPois = [];
   Poi? _selectedPoi;
@@ -130,15 +129,6 @@ class _MapPageState extends State<maps> with WidgetsBindingObserver {
     }
   }
 
-  /// Mostra una SnackBar.
-  void _showSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
-    }
-  }
-
   /// Calcola e aggiorna solo le informazioni di distanza/tempo del POI.
   Future<void> _updatePoiInfo(Poi poi) async {
     if (_userLocation != null) {
@@ -243,7 +233,10 @@ class _MapPageState extends State<maps> with WidgetsBindingObserver {
           point: _userLocation!,
           width: 80,
           height: 80,
-          child: const Icon(Icons.my_location, color: Color.fromARGB(255, 249, 154, 45)
+          child: const Icon(
+            Icons.my_location,
+            color: Color.fromARGB(255, 249, 154, 45),
+            size: 40.0,
           ),
         ),
       );
@@ -308,9 +301,9 @@ class _MapPageState extends State<maps> with WidgetsBindingObserver {
         if (_searchBarKey.currentState != null &&
             _searchBarKey.currentState!.isSearchActive) {
           _searchBarKey.currentState!.deactivateSearch();
-          return false; // Consuma l'evento indietro, non uscire dalla pagina
+          return false;
         }
-        return true; // Lascia che l'evento indietro faccia il suo corso (es. esci dalla pagina)
+        return true;
       },
       child: Scaffold(
         body: Stack(
@@ -392,4 +385,3 @@ class _MapPageState extends State<maps> with WidgetsBindingObserver {
     );
   }
 }
-

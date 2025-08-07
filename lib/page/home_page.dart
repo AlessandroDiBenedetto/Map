@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:poc_map/widget_tree.dart';
-import 'map.dart';
 
 class home extends StatelessWidget {
   @override

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 class NavBarMap extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
@@ -10,16 +11,16 @@ class NavBarMap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 110, // Reduced height
+      height: 110,
       child: NavigationBar(
-        height: 110, // Explicit height control
+        height: 110,
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.map, size: 22), // Smaller icons
+            icon: Icon(Icons.map, size: 22),
             label: 'Mappa',
           ),
           NavigationDestination(
-            icon: Icon(Icons.info, size: 22), // Smaller icons
+            icon: Icon(Icons.info, size: 22),
             label: 'Crediti',
           ),
         ],

@@ -1,10 +1,9 @@
 // widget_tree.dart
 
 import 'package:flutter/material.dart';
-// import 'package:poc_map/data/notifiers.dart'; // Non più necessario se la navigazione è gestita internamente
-import 'package:poc_map/navBar/navBar.dart'; // Assicurati che il percorso sia corretto
-import 'package:poc_map/page/credit.dart'; // Assicurati che il percorso sia corretto
-import 'package:poc_map/page/map.dart'; // Assicurati che il percorso sia corretto
+import '../widgets/nav_bar.dart';
+import 'package:poc_map/page/credit.dart';
+import 'package:poc_map/page/map.dart';
 
 class WidgetTree extends StatefulWidget {
   @override
@@ -16,15 +15,12 @@ class _WidgetTreeState extends State<WidgetTree> {
 
   // Lista dei widget delle pagine.
   // Le istanze dei widget sono create una sola volta e mantenute.
-  final List<Widget> _pages = [
-    const maps(), // La tua pagina della mappa (assicurati che sia const se possibile)
-    Credit(), // La tua pagina dei crediti (assicurati che sia const se possibile)
-  ];
+  final List<Widget> _pages = [const maps(), Credit()];
 
   /// Metodo chiamato quando un elemento della BottomNavigationBar viene toccato.
   void _onItemTapped(int index) {
     setState(() {
-      _selectedIndex = index; // Aggiorna l'indice selezionato
+      _selectedIndex = index;
     });
   }
 
@@ -34,12 +30,11 @@ class _WidgetTreeState extends State<WidgetTree> {
       body: IndexedStack(
         index:
             _selectedIndex, // Mostra il widget corrispondente all'indice selezionato
-        children: _pages, // La lista delle pagine
+        children: _pages,
       ),
       bottomNavigationBar: NavBarMap(
-        selectedIndex: _selectedIndex, // Passa l'indice corrente alla NavBar
-        onItemTapped:
-            _onItemTapped, // Passa la callback per aggiornare l'indice
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
       ),
     );
   }

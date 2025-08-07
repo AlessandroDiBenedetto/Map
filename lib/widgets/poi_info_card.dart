@@ -1,11 +1,7 @@
-// src/widgets/poi_info_card.dart
-
 import 'package:flutter/material.dart';
 import '../models/poi_model.dart';
-import '../services/direction_service.dart'; // Importa TravelMode
+import '../services/direction_service.dart';
 
-/// Una card per visualizzare le informazioni di un Punto di Interesse selezionato,
-/// inclusa la distanza e il tempo stimato per diverse modalità di viaggio.
 class PoiInfoCard extends StatefulWidget {
   final Poi poi;
   final double distanceDrivingKm;
@@ -31,26 +27,21 @@ class PoiInfoCard extends StatefulWidget {
 }
 
 class _PoiInfoCardState extends State<PoiInfoCard> {
-  TravelMode _selectedTravelMode = TravelMode.driving; // Modalità predefinita
+  TravelMode _selectedTravelMode = TravelMode.driving;
 
   @override
   Widget build(BuildContext context) {
-    // Determina la stringa della distanza
     String distanceText;
     if (widget.distanceDrivingKm < 1.0) {
-      // Se la distanza è inferiore a 1 km, mostra in metri
       distanceText = '${(widget.distanceDrivingKm * 1000).round()} m';
     } else {
-      // Altrimenti, mostra in chilometri
       distanceText = '${widget.distanceDrivingKm.toStringAsFixed(2)} km';
     }
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight:
-        MediaQuery.of(context).size.height *
-            0.6, // Max 60% of screen height
-        maxWidth: MediaQuery.of(context).size.width - 32, // Leave some margin
+        maxHeight: MediaQuery.of(context).size.height * 0.6,
+        maxWidth: MediaQuery.of(context).size.width - 32,
       ),
       child: Card(
         elevation: 8.0,
@@ -90,17 +81,13 @@ class _PoiInfoCardState extends State<PoiInfoCard> {
                     ],
                   ),
                   const SizedBox(height: 12.0),
-                  // Distanza (una sola, con logica KM/M)
+
                   Row(
                     children: [
-                      const Icon(
-                        Icons.alt_route,
-                        color: Colors.grey,
-                        size: 20,
-                      ), // Icona generica per distanza
+                      const Icon(Icons.alt_route, color: Colors.grey, size: 20),
                       const SizedBox(width: 8.0),
                       Text(
-                        'Distanza: $distanceText', // Usa la stringa formattata
+                        'Distanza: $distanceText',
                         style: const TextStyle(
                           fontSize: 16.0,
                           color: Colors.teal,
@@ -128,7 +115,7 @@ class _PoiInfoCardState extends State<PoiInfoCard> {
                     ],
                   ),
                   const SizedBox(height: 8.0),
-                  // Tempo a piedi
+
                   Row(
                     children: [
                       const Icon(
@@ -147,7 +134,7 @@ class _PoiInfoCardState extends State<PoiInfoCard> {
                     ],
                   ),
                   const SizedBox(height: 16.0),
-                  // Pulsanti di selezione modalità di viaggio
+
                   Center(
                     child: SegmentedButton<TravelMode>(
                       segments: const <ButtonSegment<TravelMode>>[
@@ -175,7 +162,7 @@ class _PoiInfoCardState extends State<PoiInfoCard> {
                     ),
                   ),
                   const SizedBox(height: 16.0),
-                  // Pulsante "Indicazioni"
+
                   Align(
                     alignment: Alignment.centerRight,
                     child: ElevatedButton.icon(

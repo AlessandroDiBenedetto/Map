@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:poc_map/page/home_page.dart';
-import 'package:poc_map/widget_tree.dart';
 
 void main() {
   runApp(const MyApp());

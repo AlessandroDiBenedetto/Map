@@ -1,10 +1,7 @@
-// src/services/direction_service.dart
-
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-/// Enumerazione per definire le diverse modalità di trasporto.
 enum TravelMode { walking, driving }
 
 /// Servizio per il calcolo delle direzioni, distanze e tempi stimati.
