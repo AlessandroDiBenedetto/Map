@@ -45,124 +45,161 @@ class _PoiInfoCardState extends State<PoiInfoCard> {
       distanceText = '${widget.distanceDrivingKm.toStringAsFixed(2)} km';
     }
 
-    return Card(
-      elevation: 8.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-      margin: const EdgeInsets.all(0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  widget.poi.name,
-                  style: const TextStyle(
-                    fontSize: 22.0,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal,
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight:
+        MediaQuery.of(context).size.height *
+            0.6, // Max 60% of screen height
+        maxWidth: MediaQuery.of(context).size.width - 32, // Leave some margin
+      ),
+      child: Card(
+        elevation: 8.0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16.0),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.poi.name,
+                          style: const TextStyle(
+                            fontSize: 22.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.teal,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                        onPressed: widget.onClosePressed,
+                      ),
+                    ],
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.grey),
-                  onPressed: widget.onClosePressed,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12.0),
-            // Distanza (una sola, con logica KM/M)
-            Row(
-              children: [
-                const Icon(
-                  Icons.alt_route,
-                  color: Colors.grey,
-                  size: 20,
-                ), // Icona generica per distanza
-                const SizedBox(width: 8.0),
-                Text(
-                  'Distanza: $distanceText', // Usa la stringa formattata
-                  style: const TextStyle(fontSize: 16.0, color: Colors.teal),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8.0),
-            // Tempo in macchina
-            Row(
-              children: [
-                const Icon(Icons.directions_car, color: Colors.grey, size: 20),
-                const SizedBox(width: 8.0),
-                Text(
-                  'Auto: ${widget.timeDrivingMinutes} min',
-                  style: const TextStyle(fontSize: 16.0, color: Colors.teal),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8.0),
-            // Tempo a piedi
-            Row(
-              children: [
-                const Icon(Icons.directions_walk, color: Colors.grey, size: 20),
-                const SizedBox(width: 8.0),
-                Text(
-                  'A piedi: ${widget.timeWalkingMinutes} min',
-                  style: const TextStyle(fontSize: 16.0, color: Colors.teal),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16.0),
-            // Pulsanti di selezione modalità di viaggio
-            Center(
-              child: SegmentedButton<TravelMode>(
-                segments: const <ButtonSegment<TravelMode>>[
-                  ButtonSegment<TravelMode>(
-                    value: TravelMode.driving,
-                    label: Text('Auto'),
-                    icon: Icon(Icons.directions_car),
+                  const SizedBox(height: 12.0),
+                  // Distanza (una sola, con logica KM/M)
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.alt_route,
+                        color: Colors.grey,
+                        size: 20,
+                      ), // Icona generica per distanza
+                      const SizedBox(width: 8.0),
+                      Text(
+                        'Distanza: $distanceText', // Usa la stringa formattata
+                        style: const TextStyle(
+                          fontSize: 16.0,
+                          color: Colors.teal,
+                        ),
+                      ),
+                    ],
                   ),
-                  ButtonSegment<TravelMode>(
-                    value: TravelMode.walking,
-                    label: Text('A piedi'),
-                    icon: Icon(Icons.directions_walk),
+                  const SizedBox(height: 8.0),
+                  // Tempo in macchina
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.directions_car,
+                        color: Colors.grey,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8.0),
+                      Text(
+                        'Auto: ${widget.timeDrivingMinutes} min',
+                        style: const TextStyle(
+                          fontSize: 16.0,
+                          color: Colors.teal,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8.0),
+                  // Tempo a piedi
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.directions_walk,
+                        color: Colors.grey,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8.0),
+                      Text(
+                        'A piedi: ${widget.timeWalkingMinutes} min',
+                        style: const TextStyle(
+                          fontSize: 16.0,
+                          color: Colors.teal,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16.0),
+                  // Pulsanti di selezione modalità di viaggio
+                  Center(
+                    child: SegmentedButton<TravelMode>(
+                      segments: const <ButtonSegment<TravelMode>>[
+                        ButtonSegment<TravelMode>(
+                          value: TravelMode.driving,
+                          label: Text('Auto'),
+                          icon: Icon(Icons.directions_car),
+                        ),
+                        ButtonSegment<TravelMode>(
+                          value: TravelMode.walking,
+                          label: Text('A piedi'),
+                          icon: Icon(Icons.directions_walk),
+                        ),
+                      ],
+                      selected: <TravelMode>{_selectedTravelMode},
+                      onSelectionChanged: (Set<TravelMode> newSelection) {
+                        setState(() {
+                          _selectedTravelMode = newSelection.first;
+                        });
+                      },
+                      style: SegmentedButton.styleFrom(
+                        selectedForegroundColor: Colors.teal,
+                        selectedBackgroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16.0),
+                  // Pulsante "Indicazioni"
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton.icon(
+                      onPressed: () =>
+                          widget.onDirectionsPressed(_selectedTravelMode),
+                      icon: const Icon(Icons.navigation),
+                      label: const Text('Indicazioni'),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.teal,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
-                selected: <TravelMode>{_selectedTravelMode},
-                onSelectionChanged: (Set<TravelMode> newSelection) {
-                  setState(() {
-                    _selectedTravelMode = newSelection.first;
-                  });
-                },
-                style: SegmentedButton.styleFrom(
-                  selectedForegroundColor: Colors.teal,
-                  selectedBackgroundColor: Colors.white,
-                ),
               ),
             ),
-            const SizedBox(height: 16.0),
-            // Pulsante "Indicazioni"
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton.icon(
-                onPressed: () =>
-                    widget.onDirectionsPressed(_selectedTravelMode),
-                icon: const Icon(Icons.navigation),
-                label: const Text('Indicazioni'),
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.teal,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.0),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

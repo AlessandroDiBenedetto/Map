@@ -243,7 +243,8 @@ class _MapPageState extends State<maps> with WidgetsBindingObserver {
           point: _userLocation!,
           width: 80,
           height: 80,
-          child: const Icon(Icons.my_location, color: Color.fromARGB(255, 249, 154, 45)),
+          child: const Icon(Icons.my_location, color: Color.fromARGB(255, 249, 154, 45)
+          ),
         ),
       );
     }
@@ -392,4 +393,3 @@ class _MapPageState extends State<maps> with WidgetsBindingObserver {
   }
 }
 
-//dove sonon io

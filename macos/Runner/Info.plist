@@ -28,5 +28,7 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+    <string>Questa app usa la tua posizione per mostrare la mappa correttamente.</string>
 </dict>
 </plist>
