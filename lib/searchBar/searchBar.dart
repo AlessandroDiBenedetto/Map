@@ -83,16 +83,19 @@ class SearchBarMapState extends State<SearchBarMap> {
           borderRadius: BorderRadius.circular(20),
           child: TextField(
             controller: _searchController,
-            style: const TextStyle(color: Colors.teal),
+            style: const TextStyle(color: Color.fromARGB(255, 243, 250, 255)),
             decoration: InputDecoration(
               hintText: 'Seleziona un luogo sulla mappa',
-              hintStyle: const TextStyle(color: Colors.teal),
-              border: OutlineInputBorder(
+              hintStyle: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+              // Aggiungi focusedBorder per cambiare il colore del bordo quando è in focus
+              focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
+                borderSide: const BorderSide(color: Color.fromARGB(255, 252, 252, 252), width: 2.0),
               ),
               filled: true,
               fillColor: Colors.grey[850],
-              prefixIcon: Icon(Icons.search, color: Colors.teal),
+              prefixIcon: Icon(Icons.search, color: const Color.fromARGB(255, 255, 255, 255)),
             ),
             onTap: () {
               // Quando l'utente tocca il campo, se è vuoto, mostra i primi 3 POI
@@ -137,7 +140,7 @@ class SearchBarMapState extends State<SearchBarMap> {
                 return ListTile(
                   title: Text(
                     poi.name,
-                    style: const TextStyle(color: Colors.teal),
+                    style: const TextStyle(color: Color.fromRGBO(255, 255, 255, 1)),
                   ),
                   onTap: () => _onResultTap(poi),
                 );
