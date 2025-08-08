@@ -178,6 +178,8 @@ class _MapPageState extends State<maps> with WidgetsBindingObserver {
       _mapController.move(LatLng(poi.latitude, poi.longitude), 15.0);
       _routePoints = [];
       _isNavigating = false;
+      // Disattiva la ricerca quando un POI è selezionato
+      _searchBarKey.currentState?.deactivateSearch();
     });
     _updatePoiInfo(poi);
   }
@@ -221,6 +223,30 @@ class _MapPageState extends State<maps> with WidgetsBindingObserver {
       _currentWalkingTimeMinutes = 0;
       _isNavigating = false;
     });
+  }
+
+  /// Chiamato quando l'utente attiva la searchbar.
+  /// Chiude la selezione del POI se attiva.
+  void _onSearchTapped() {
+    if (_selectedPoi != null) {
+      _clearSelectionAndRoute();
+    }
+  }
+
+  /// Gestisce la pressione del pulsante "Indietro" del telefono.
+  Future<bool> _onWillPop() async {
+    // Se la search bar è attiva, disattivala e non uscire
+    if (_searchBarKey.currentState?.isSearchActive ?? false) {
+      _searchBarKey.currentState?.deactivateSearch();
+      return Future.value(false);
+    }
+    // Se un POI è selezionato, annulla la selezione e non uscire
+    if (_selectedPoi != null) {
+      _clearSelectionAndRoute();
+      return Future.value(false);
+    }
+    // Altrimenti, permetti l'uscita
+    return Future.value(true);
   }
 
   @override
@@ -267,9 +293,7 @@ class _MapPageState extends State<maps> with WidgetsBindingObserver {
           ),
         ),
       );
-    }
-
-    if (_selectedPoi == null && !_isNavigating) {
+    } else {
       allMarkers.addAll(
         _allPois.map((poi) {
           return Marker(
@@ -296,33 +320,18 @@ class _MapPageState extends State<maps> with WidgetsBindingObserver {
     }
 
     return WillPopScope(
-      // Widget per intercettare il tasto/gesture indietro
-      onWillPop: () async {
-        if (_searchBarKey.currentState != null &&
-            _searchBarKey.currentState!.isSearchActive) {
-          _searchBarKey.currentState!.deactivateSearch();
-          return false;
-        }
-        return true;
-      },
+      onWillPop: _onWillPop,
       child: Scaffold(
         body: Stack(
           children: [
             FlutterMap(
               mapController: _mapController,
               options: MapOptions(
-                initialCenter: _userLocation ?? LatLng(41.9028, 12.4964),
+                initialCenter: _userLocation!,
                 initialZoom: _userLocation != null ? 15.0 : 6.0,
                 minZoom: 2.0,
                 maxZoom: 18.0,
                 keepAlive: true,
-                onTap: (tapPosition, latLng) {
-                  // Gestisce il tap sulla mappa
-                  if (_searchBarKey.currentState != null &&
-                      _searchBarKey.currentState!.isSearchActive) {
-                    _searchBarKey.currentState!.deactivateSearch();
-                  }
-                },
               ),
               children: [
                 TileLayer(
@@ -335,7 +344,7 @@ class _MapPageState extends State<maps> with WidgetsBindingObserver {
                     polylines: [
                       Polyline(
                         points: _routePoints,
-                        color: const Color.fromARGB(255, 24, 71, 151),
+                        color: const Color.fromARGB(255, 66, 102, 163),
                         strokeWidth: 5.0,
                       ),
                     ],
@@ -348,8 +357,9 @@ class _MapPageState extends State<maps> with WidgetsBindingObserver {
                 left: 16,
                 right: 16,
                 child: SearchBarMap(
-                  key: _searchBarKey, // Assegna il GlobalKey
+                  key: _searchBarKey,
                   onPoiSelected: _onPoiSelected,
+                  onSearchTapped: _onSearchTapped,
                 ),
               ),
             if (_selectedPoi != null && !_isNavigating)

@@ -1,3 +1,5 @@
+// poc_map/widgets/search_bar.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/poi_model.dart';
@@ -5,7 +7,14 @@ import '../services/poi_service.dart';
 
 class SearchBarMap extends StatefulWidget {
   final Function(Poi) onPoiSelected;
-  const SearchBarMap({Key? key, required this.onPoiSelected}) : super(key: key);
+  final VoidCallback onSearchTapped; // Parametro aggiunto per la callback
+
+  const SearchBarMap({
+    Key? key,
+    required this.onPoiSelected,
+    required this.onSearchTapped, // Richiede la callback
+  }) : super(key: key);
+
   @override
   SearchBarMapState createState() => SearchBarMapState();
 }
@@ -16,6 +25,7 @@ class SearchBarMapState extends State<SearchBarMap> {
   List<Poi> _searchResults = [];
   bool _showResults = false;
   bool get isSearchActive => _showResults;
+
   @override
   void initState() {
     super.initState();
@@ -95,14 +105,12 @@ class SearchBarMapState extends State<SearchBarMap> {
                 ),
               ),
               onTap: () {
+                // Chiamiamo la callback fornita dal widget padre
+                widget.onSearchTapped();
                 if (_searchController.text.isEmpty) {
                   setState(() {
                     _searchResults = _poiService.getAllPois().take(3).toList();
                     _showResults = _searchResults.isNotEmpty;
-                  });
-                } else {
-                  setState(() {
-                    _showResults = true;
                   });
                 }
               },
